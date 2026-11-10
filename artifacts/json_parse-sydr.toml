@@ -1,0 +1,41 @@
+out = "/home/fuzzer/json-parser-1.1.0/fuzz/json_parse_out"
+
+[sydr]
+args = "-l debug"
+target = "/home/fuzzer/json-parser-1.1.0/fuzz/sydr_fuzz @@"
+jobs = 2
+
+[[aflplusplus]]
+target = "/home/fuzzer/json-parser-1.1.0/fuzz/afl_fuzz"
+args = "-x /home/fuzzer/artifacts/structure_aware/json.dict -i /home/fuzzer/artifacts/seeds"
+jobs = 2
+[aflplusplus.env]
+    ASAN_OPTIONS = "symbolize=0"
+    MSAN_OPTIONS = "exit_code=86,symbolize=0"
+    UBSAN_OPTIONS = "abort_on_error=1"
+
+[[aflplusplus]]
+target = "/home/fuzzer/json-parser-1.1.0/fuzz/ubsan_fuzz"
+args = "-x /home/fuzzer/artifacts/structure_aware/json.dict -i /home/fuzzer/artifacts/seeds"
+jobs = 1
+[aflplusplus.env]
+    ASAN_OPTIONS = "symbolize=0"
+    MSAN_OPTIONS = "exit_code=86,symbolize=0"
+    UBSAN_OPTIONS = "abort_on_error=1"
+
+[[aflplusplus]]
+target = "/home/fuzzer/json-parser-1.1.0/fuzz/asan_fuzz"
+args = "-x /home/fuzzer/artifacts/structure_aware/json.dict -i /home/fuzzer/artifacts/seeds"
+jobs = 1
+[aflplusplus.env]
+    ASAN_OPTIONS = "symbolize=0"
+    MSAN_OPTIONS = "exit_code=86,symbolize=0"
+    UBSAN_OPTIONS = "abort_on_error=1"
+
+[libfuzzer]
+path = "/home/fuzzer/json-parser-1.1.0/fuzz/libfuzzer_fuzz"
+args = "-dict=/home/fuzzer/artifacts/structure_aware/json.dict -jobs=2 /home/fuzzer/artifacts/seeds"
+cmin = false
+
+[cov]
+target = "/home/fuzzer/json-parser-1.1.0/fuzz/cov_fuzz"
