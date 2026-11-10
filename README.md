@@ -19,8 +19,7 @@ docker run -it --name="json_fuzz" -v "$(pwd)/artifacts:/home/fuzzer/artifacts" j
 ```bash
 cd /home/fuzzer/json-parser-1.1.0
 ./configure
-make
-rm -f libjsonparser.so
+make libjsonparser.a
 ```
 
 4. Копируем артефакты по фаззингу в рабочую директорию. Собираем наш тест:
@@ -85,7 +84,7 @@ cd /home/fuzzer/json-parser-1.1.0/fuzz
 cd /home/fuzzer/json-parser-1.1.0
 make clean
 CC=afl-clang-lto ./configure
-make && rm -f libjsonparser.so
+make libjsonparser.a
 ```
 
 2. Собираем обёртку с afl++:
@@ -105,7 +104,7 @@ afl-fuzz -i corpus/ -o out -- ./json_parse
 cd /home/fuzzer/json-parser-1.1.0
 make clean
 CC=clang CFLAGS="-fprofile-instr-generate -fcoverage-mapping" ./configure
-make && rm -f libjsonparser.so
+make libjsonparser.a
 ```
 
 2. Компилируем обёртку
@@ -161,6 +160,40 @@ afl-fuzz -S ubsan -i corpus -o out -- ./ubsan_fuzz
 
 5. Узнаём статистику фаззинга по всем инстансам:
 ```bash
-cd /home/fuzzer/json-parser-1.1.0/fuzz\
+cd /home/fuzzer/json-parser-1.1.0/fuzz
 afl-whatsup out
+```
+
+### Запуск с помощью sydr-fuzz
+
+Чтобы запустить фаззинг с помощью инструмента `sydr-fuzz`, необходимо первым делом перезапустить контейнер, в который примонтируется папка с sydr-fuzz
+
+```bash
+docker run -it --name="json_fuzz_sydr" -v "$(pwd)/artifacts:/home/fuzzer/artifacts" -v "/home/lenix/Downloads/sydr/:/sydr/" --network=host -v /etc/hasplm:/etc/hasplm -v /var/hasplm:/var/hasplm json_fuzz_img /bin/bash
+```
+
+Далее произведём сборку целевого приложения под разные фаззинг-движки (AFL++, LibFuzzer, Sydr), а также для разных санитайзеров (asan, ubsan) с помощью скрипта `build.sh`.
+
+```bash
+/home/fuzzer/artifacts/scripts/build.sh
+```
+
+После этого фаззинг можно запустить простой командой:
+
+```bash
+/sydr/sydr-fuzz -c /home/fuzzer/artifacts/json_parse-sydr.toml run
+```
+
+При этом sydr-fuzz одновременно запустит сразу все фаззинг-движки в Ensemble-режиме, при котором все фаззеры обмениваются корпусом между собой.
+
+Чтобы минимизировать корпус:
+
+```bash
+/sydr/sydr-fuzz -c /home/fuzzer/artifacts/json_parse-sydr.toml cmin -r
+```
+
+Сбор наработанного покрытия:
+
+```bash
+/sydr/sydr-fuzz -c /home/fuzzer/artifacts/json_parse-sydr.toml cov-html
 ```

@@ -13,12 +13,10 @@ WORKDIR /home/fuzzer/
 RUN wget https://github.com/json-parser/json-parser/archive/refs/tags/v1.1.0.tar.gz && tar xf v1.1.0.tar.gz && rm -f v1.1.0.tar.gz
 
 # install AFL++ fuzzer
-RUN apt-get install -y AFLplusplus llvm15.0
+RUN apt-get update && apt-get install -y AFLplusplus llvm15.0 lcov
 ENV AFL_SKIP_CPUFREQ=1
 ENV AFL_TRY_AFFINITY=1
 ENV AFL_I_DONT_CARE_ABOUT_MISSING_CRASHES=1
 
 # use llvm-15 by default
 ENV ALTWRAP_LLVM_VERSION=15.0
-
-ENTRYPOINT ["/bin/bash"]
